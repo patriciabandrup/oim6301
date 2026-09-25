@@ -224,7 +224,7 @@ def _(mo):
 def _():
     charges = [16.75, 22.25, 25.00, 20.25, 36.25]
     charges
-    return
+    return (charges,)
 
 
 @app.cell(hide_code=True)
@@ -403,6 +403,36 @@ def _():
     order_lines = ["notebook", "pen"]
     order_lines.append(["stapler", "tape"])
     len(order_lines)
+    return (order_lines,)
+
+
+@app.cell
+def _(order_lines):
+    order_lines[2]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Read what came back after order_line[2]. A: The output was stapler and tape
+    """)
+    return
+
+
+@app.cell
+def _():
+    order2_lines = ["notebook", "pen"]
+    order2_lines.extend(["stapler", "tape"])
+    len(order2_lines)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    how many items does append add, whatever you hand it? A: Append treats the list added at the end as one item. So when the output of len(order_lines) is three, it doesn't count stapler and tape as two items added to order_lines list. When we change append to extend it treats the list as multiple items and adds each item, so len(order2_lines) would increase by the number of items added to the list, rather than being treated as one item.
+    """)
     return
 
 
@@ -433,6 +463,26 @@ def _():
     print(sorted(tickers))
     print(tickers.sort())
     tickers
+    return (tickers,)
+
+
+@app.cell
+def _(tickers):
+    print(tickers)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    why did tickers.sort() print None, when sorted(tickers) printed a list? A: tickers.sort() permentaly sorted the list while `sorted(tickers)` returns a new sorted list without modifying the original tickers.
+    """)
+    return
+
+
+@app.cell
+def _(tickers):
+    print(sorted(tickers, reverse = True))
     return
 
 
@@ -466,9 +516,23 @@ def _(mo):
 @app.cell
 def _():
     prices = [12.50, 8.00, 19.99]
-    sale_prices = prices
+    sale_prices = prices[:]
     sale_prices.append(4.99)
     prices
+    return prices, sale_prices
+
+
+@app.cell
+def _(prices, sale_prices):
+    prices is sale_prices
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    When would you want two names to refer to the same list on purpose? A: You would want to have two names refer to the same list when you are tracking the same underlying data so the changes show up on both lists instantly.
+    """)
     return
 
 
@@ -503,6 +567,26 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    What did "100" + "50" do, and why is that reasonable for text? A: Since "100" and "50" both have quotes, they are strings, not numbers. Adding the two strings would connect them together making "10050".
+    """)
+    return
+
+
+@app.cell
+def _():
+    print(int("100") + int("50"))
+    return
+
+
+@app.cell
+def _():
+    print(100.5)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     > **Advanced · G · Off the end.** `charges` in section 2 holds last week's five freight
     > charges. This one has no cell of its own, because every line in it fails on
     > purpose and a notebook that raises on load is a nuisance.
@@ -518,6 +602,41 @@ def _(mo):
     > compute both numbers. Then extend it so that it reads
     > `3 of 5 orders shipped (60%)`. An f-string is the short way to build a sentence out of
     > values, and it was section 5 of last week's notebook.
+    """)
+    return
+
+
+@app.cell
+def _(charges):
+    charges[5]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Why there is no item 5 when the list holds five charges? A: There no items because indexing starts at 0, so if I put in charges[5] there would need to be six numbers listed.
+    """)
+    return
+
+
+@app.cell
+def _(charges):
+    charges[4]
+    charges[-1]
+    return
+
+
+@app.cell
+def _(charges):
+    charges[-6]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    What happens when you run charges[-6]? A: It returns the item that is the sixth number from the end of the list; however since there are only 5 items in the list, it raises an IndexError.
     """)
     return
 
@@ -577,6 +696,40 @@ def _(mo):
 
     Two of them fail, and both give the same kind of error. Add a cell and find out
     which, and what the message says. A `KeyError` names the key it could not find.
+    """)
+    return
+
+
+@app.cell
+def _(first_order):
+    first_order["Freight"]
+    return
+
+
+@app.cell
+def _(first_order):
+    first_order["freight"]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    There was an error because "freight" with a lower case "f" is different from "Freight" so it cannot locate it.
+    """)
+    return
+
+
+@app.cell
+def _(first_order):
+    first_order[0]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Why was there an error with first_order[0]? A: There's an error because we inputed first_order has a record and not by a list, so we are not organized by position, but by "name" so [0] won't work.
     """)
     return
 
@@ -666,6 +819,64 @@ def _(mo):
 
     **Going further.** Look at the three orders with no `ShippedDate`. What do they have
     in common that the other 27 do not? The answer is not about shipping.
+    """)
+    return
+
+
+@app.cell
+def _(orders):
+    total_freight = 0
+    for order in orders:
+        total_freight = total_freight + order["Freight"]
+    total_freight
+    return
+
+
+@app.cell
+def _(orders):
+    no_ship_count = 0
+    for rec in orders:
+        if rec["ShippedDate"] is None:
+            no_ship_count = no_ship_count + 1
+    no_ship_count
+    return
+
+
+@app.cell
+def _(orders):
+    biggest_order = orders[0]
+    for rec2 in orders:
+        if rec2["Freight"] > biggest_order["Freight"]:
+            biggest_order = rec2
+    biggest_order["OrderID"]
+    biggest_order["Freight"]
+    return
+
+
+@app.cell
+def _(orders):
+    not_shipped = []
+    for rec3 in orders:
+        if rec3["ShippedDate"] is None:
+            not_shipped.append(rec3)
+    not_shipped
+    return
+
+
+@app.cell
+def _(orders):
+    shipped = []
+    for rec4 in orders:
+        if rec4["ShippedDate"] is not None:
+            shipped.append(rec4)
+    shipped
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Look at the three orders with no ShippedDate. What do they have in common that the other 27 do not? A: The three orders that were not shipped were all ordered in April 2018 (04/2018).
     """)
     return
 
