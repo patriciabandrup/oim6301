@@ -347,6 +347,33 @@ def _(mo):
 def _():
     statuses = ["shipped", "pending", "shipped", "cancelled", "shipped"]
     statuses
+    return (statuses,)
+
+
+@app.cell
+def _(statuses):
+    shipped_count = 0 
+    for status in statuses:
+        if status == "shipped":
+            shipped_count = shipped_count + 1
+    shipped_count
+    return (shipped_count,)
+
+
+@app.cell
+def _(statuses):
+    not_count = 0 
+    for other in statuses:
+        if other == "pending" or other == "cancelled":
+            not_count = not_count + 1
+    not_count
+    return
+
+
+@app.cell
+def _(shipped_count, statuses):
+    shipped_percent = (shipped_count)/len(statuses) * 100
+    shipped_percent
     return
 
 
