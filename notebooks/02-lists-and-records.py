@@ -901,11 +901,14 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    *One row is ...*
-
-    *(Replace this line with your own sentence. If this cell shows you code instead of
-    text, use the cell menu to turn it into a markdown cell.)*
+    One row is a series of features that are used to represent a single obersvation in a data set. In this example, one row is one customer's order where everything about it is listed, such as shipping status, delivery date, and frieght cost, etc.
     """)
+    return
+
+
+@app.cell
+def _(orders):
+    len(orders)
     return
 
 
@@ -945,12 +948,70 @@ def _():
     return (portfolio,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    My Answer: For this cell, we are creating a new data frame called portfolio. Listing the attributes for each stock we are looking at.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Agent answer: The outer [ ... ] is a list. Each item inside that list is a { ... } -a record, with named fields. So portfolio is a table: six rows (records), one per stock holding. Every record has three fields, read by name, not position:
+    """)
+    return
+
+
+@app.cell
+def _():
+    return
+
+
 @app.cell
 def _(portfolio):
     portfolio_cost = 0
     for holding in portfolio:
         portfolio_cost = portfolio_cost + holding["Shares"] * holding["Price"]
     portfolio_cost
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    My answer: In this cell we are creating the model for calculating the cost of the protfolio. We define the function as portfolio_cost 0 to assign its starting price/point to then add on to with values of shares and price that are listed in the data set.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Agent's Answer: This cell adds up the total cost of the portfolio. portfolio_cost = 0 starts a running total at zero. The for holding in portfolio: loop then visits each of the six stock records one at a time, and each pass multiplies that stock's "Shares" by its "Price" and adds the result to portfolio_cost. After all six stocks have been visited, the final line displays the finished total: $116,302.70.
+    """)
+    return
+
+
+@app.cell
+def _():
+    inventory = [
+        {"Title": "Python Basics", "Quantity": 12, "Price": 29.99},
+        {"Title": "Data Stories", "Quantity": 5, "Price": 45.50},
+        {"Title": "Marketing 101", "Quantity": 8, "Price": 34.00},
+        {"Title": "The Long Game", "Quantity": 20, "Price": 15.75},
+    ]
+    inventory
+    return (inventory,)
+
+
+@app.cell
+def _(inventory):
+    total_value = 0 
+    for value in inventory:
+        total_value = total_value + value["Price"] * value["Quantity"]
+    total_value
     return
 
 
@@ -1002,6 +1063,63 @@ def _(mo):
         _where = f"could not write into {_data_dir.name}/: {_error}"
 
     _where
+    return (portfolio_csv,)
+
+
+@app.cell
+def _(portfolio_csv):
+    _file = open(portfolio_csv)
+    _lines = _file.readlines()
+    _file.close()
+
+    file_total = 0
+    for _line in _lines[1:]:
+        _parts = _line.strip().split(",")
+        _name = _parts[0]
+        _shares = int(_parts[1])
+        _price = float(_parts[2])
+        _cost = _shares * _price
+        file_total = file_total + _cost
+        print(f"{_name:8} {_shares:6} {_price:8.2f}")
+
+    print(f"Total cost: ${file_total:.2f}")
+    return
+
+
+@app.cell
+def _(mo):
+
+    _lines = ["drink,quantity,price"]
+    for _sale in [
+        ("Latte", 34, 4.75), ("Espresso", 20, 3.25), ("Cold Brew", 15, 4.50), ("Mocha", 10, 5.25),
+    ]:
+        _lines.append(f"{_sale[0]},{_sale[1]},{_sale[2]}")
+
+    _data_dir = mo.notebook_dir().parent / "data"
+    _data_dir.mkdir(parents=True, exist_ok=True)
+    sales_csv = _data_dir / "sales.csv"
+    sales_csv.write_text("\n".join(_lines) + "\n")
+    f"wrote {sales_csv.parent.name}/{sales_csv.name}"
+    return (sales_csv,)
+
+
+@app.cell
+def _(sales_csv):
+    file = open(sales_csv)
+    lines = file.readlines()
+    file.close()
+
+    file2_total = 0
+    for line in lines[1:]:
+        parts = line.strip().split(",")
+        name = parts[0]
+        quantity = int(parts[1])
+        price2 = float(parts[2])
+        total = price2 * quantity
+        file2_total = file2_total + total
+        print(f"{name:10} {quantity:8} {price2:8.2f}")
+
+    print(f"Total sales: ${file2_total:.2f}")
     return
 
 
