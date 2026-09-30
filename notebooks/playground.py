@@ -25,6 +25,19 @@ def _(charge):
 
 @app.cell
 def _():
+    total = 90 
+
+    discount = 0
+
+    if total >= 100:
+        discount = 0.05
+    elif total >= 200:
+        discount = 0.10
+    return
+
+
+@app.cell
+def _():
     return
 
 
