@@ -8,6 +8,8 @@
 """Collections and APIs.
 """
 
+from operator import add
+
 import marimo
 
 __generated_with = "0.24.2"
@@ -194,40 +196,6 @@ def _():
     return (closing_prices,)
 
 
-@app.cell
-def _(closing_prices):
-    closing_prices["AAPL"]
-    return
-
-
-@app.cell
-def _(closing_prices):
-    "TSLA" in closing_prices
-    return
-
-
-@app.cell
-def _(closing_prices):
-    ticker_above200 = []
-    for ticker in closing_prices:
-        if closing_prices[ticker] >= 200:
-            ticker_above200.append(ticker)
-    ticker_above200
-    return
-
-
-@app.cell
-def _(closing_prices):
-    highest_price = 0
-    highest_ticker = ""
-    for _ticker in closing_prices:
-        if closing_prices[_ticker] > highest_price:
-            highest_price = closing_prices[_ticker]
-            highest_ticker = _ticker
-    highest_ticker
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -253,24 +221,6 @@ def _():
     ]
     len(ship_countries)
     return (ship_countries,)
-
-
-@app.cell
-def _(ship_countries):
-    shipStatus_counts = {}
-    for ship_status in ship_countries:
-        shipStatus_counts[ship_status] = shipStatus_counts.get(ship_status, 0) + 1
-
-    shipStatus_counts
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    France, Germany, Brazil, and USA have the most orders with 4 each.
-    """)
-    return
 
 
 @app.cell(hide_code=True)
@@ -401,12 +351,6 @@ def _(mo):
     mo.md(r"""
     `"IBM" in traded_tickers` is `False`. A set has no positions, so `traded_tickers[0]` stops with `TypeError: 'set' object is not subscriptable`.
     """)
-    return
-
-
-@app.cell
-def _(traded_tickers):
-    traded_tickers[0] 
     return
 
 
