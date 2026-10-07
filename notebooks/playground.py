@@ -6,6 +6,107 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    # Review of Session 5
+    # Dictionaries take {}
+    # Lists take []
+    # Q1
+    orders = [
+        {"OrderID": 10248, "ShipCountry": "France"},
+        {"OrderID": 10249, "ShipCountry": "Germany"},
+    ]
+    type(orders)
+    return (orders,)
+
+
+@app.cell
+def _(orders):
+    orders[0]["ShipCountry"]
+    return
+
+
+@app.cell
+def _(orders):
+    # orders["ShipCountry"] --> Key Error 
+    orders[1]["OrderID"]
+    return
+
+
+@app.cell
+def _():
+    #countries = []
+    #for order in orders: 
+        # print (type(order))
+    #    print(order{'OrderID'}, order({'Shipcountry'})
+    #         countries.append
+    return
+
+
+@app.cell
+def _():
+    bmi = 27
+    if bmi >= 18.5:
+        category = "Normal"
+    elif bmi >= 25:
+        category = "Overweight"
+    elif bmi >= 30:
+        category = "Obese"
+    else:
+        category = "Underweight"
+
+    print(category)
+    # prints normal because the first matching condition is checked first, after it satisfies the first condition, it skips the rest. 
+    return
+
+
+@app.cell
+def _():
+    # data[1]{'models'}[0]{'name'} --> Sonnet 5 (Babason)
+    # Nested Example: list inside of dictionary
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
     import marimo as mo
 
     return
@@ -44,7 +145,6 @@ def _():
     for charge in [10, 20, 30]:
         total_ = total_ + charge
     print(total_)
-
     return (charge,)
 
 
