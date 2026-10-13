@@ -419,6 +419,20 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    *1. This would be a list, because an order can have many separate lines, and those lines need to be read by position, and added to, removed from, and reordered — all things a list allows.*
+
+    *2. This would be a set, because you only care about whether each customer has ordered this year, not how many times or in what order; a set keeps each value once and answers this question.*
+
+    *3. This would be a dictionary, because each product name is a key, and looking up the units sold for a specific product means reading a value by name rather than by position.*
+
+    *4. This would be a tuple, because it's one single thing (one shipment) with several named parts — carrier, tracking number, and ship date — and since those parts must never change once recorded, a tuple is the right fit rather than a dictionary.*
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## ✏️ D · The portfolio again
 
     Notebook 2 held the six holdings as a list of dictionaries. Here they are as a list of tuples, one holding per tuple.
@@ -445,6 +459,24 @@ def _():
         ("TSLA", 150, 255.70),
     ]
     holdings
+    return (holdings,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *1. I would rather work with each holding as a dictionary because reading holding["Price"] by name is clearer than remembering that position 2 in a tuple always means price. This would allow for easier and quicker access to modify that data, which is necessary when dealing with constanly change data like stock prices.*
+    """)
+    return
+
+
+@app.cell
+def _(holdings):
+    cost = []
+    for _symbol, _shares, _price in holdings:
+        cost.append(_shares * _price)
+    total_cost = sum(cost)
+    print(f"Total cost ${total_cost:.2f}")
     return
 
 
@@ -477,6 +509,11 @@ def _():
         ("2026-08-12", "AAPL", "sell", 40, 250.00),
     ]
     year_trades
+    return
+
+
+@app.cell
+def _():
     return
 
 
