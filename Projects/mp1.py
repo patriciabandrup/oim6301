@@ -197,6 +197,20 @@ def _(run_simulation):
 
 
 @app.cell
+def _(table_40):
+    for day_row in table_40:
+        print(f"Day {day_row['day']:2}: "
+              f"start {day_row['starting_stock']:3}, "
+              f"arrived {day_row['arrived']:3}, "
+              f"demand {day_row['demand']:2}, "
+              f"sold {day_row['sold']:2}, "
+              f"lost {day_row['lost']:2}, "
+              f"end {day_row['ending_stock']:3}, "
+              f"ordered {day_row['units_ordered']:3}")
+    return
+
+
+@app.cell
 def _(reorder_points, run_simulation):
     comparison_table = []
 
@@ -290,8 +304,8 @@ def _(starting_stock, table_40):
     final_ending_stock = table_40[-1]["ending_stock"]
     # [-1] grabs the last day's row 
 
-    finalCheck_arrived= starting_stock + final_total_arrived
-    finalCheck_left = final_total_sold + final_total_lost + final_ending_stock
+    finalCheck_arrived = starting_stock + final_total_arrived
+    finalCheck_left = final_total_sold + final_ending_stock
 
     finalCheck_arrived, finalCheck_left
     return
@@ -300,7 +314,7 @@ def _(starting_stock, table_40):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    *To check that my numbers were right, I compared the total cartons that came in (starting stock plus all deliveries) against the total cartons accounted for (units sold, units lost, and the final ending stock). Both totals came to 460, confirming the simulation didn't lose or create any cartons.*
+    *To check that my numbers were right, I compared the total cartons that came in (starting stock plus all deliveries) against the total cartons actually accounted for (units sold plus the final ending stock). Lost sales were left out of this check, since a lost sale never used up a carton. Both totals came to 460, confirming the simulation didn't lose or create any cartons.*
     """)
     return
 
@@ -343,7 +357,7 @@ def _():
 
 
 @app.cell
-def _(new_reorder_points, run_simulation):
+def _(c_table, new_reorder_points, run_simulation):
     cost_table = []
 
     for new_rp in new_reorder_points:
@@ -370,6 +384,13 @@ def _(new_reorder_points, run_simulation):
         })
 
     cost_table
+
+    for summary in c_table:
+        print(f"Reorder point {summary['reorder_point']:3}: "
+              f"lost {summary['units_lost']:4}, "
+              f"lost-sale days {summary['days_with_lost_sale']:2}, "
+              f"orders {summary['orders_placed']:2}, "
+              f"avg stock {summary['average_ending_stock']:6.2f}")
     return (cost_table,)
 
 
@@ -380,6 +401,17 @@ def _(cost_table):
         if entry["total_cost"] < cheapest["total_cost"]:
             cheapest = entry
     cheapest
+    return
+
+
+@app.cell
+def _(cost_table):
+    for summary in cost_table:
+        print(f"Reorder point {summary['reorder_point']:3}: "
+              f"lost {summary['units_lost']:4}, "
+              f"lost-sale days {summary['days_with_lost_sale']:2}, "
+              f"orders {summary['orders_placed']:2}, "
+              f"avg stock {summary['average_ending_stock']:6.2f}")
     return
 
 
