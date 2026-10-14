@@ -67,7 +67,63 @@ def _():
 
 @app.cell
 def _():
+    # Beginning of Session 6 Notes (10/14)
     return
+
+
+@app.cell
+def _():
+    # reply = {
+    #    "count": 2,
+    #    "data": [
+    #       {"name": "Carla", "city": "Boston", "age": 34},
+    #         {"name": "Hiro", "city": "Austin", "age": 29},
+    #     ],
+    # }
+    # len(reply["data"][0])
+
+    # type(reply) --> dictionary 
+    # len(reply["data"][0]) --> 3 because there are 3 key-value pairs (name, city, age)
+
+    # How do you get Boston?
+    # reply['data][0]['city'] --> Boston
+
+    # how to find by name 
+    # for row in data:
+    #     if row['name'] =='Ethan':
+    #         print(f'Found {row['name]}, {row['city']}, {row['age']}")
+    return
+
+
+app._unparsable_cell(
+    r"""
+    # bmi = 27
+    # if bmi >= 30:
+    #     category = "Obese"
+    # elif bmi >= 25:
+    #     category = "Overweight"
+    # elif bmi >= 18.5:
+    #     category = "Normal"
+    # else:
+    #     category = "Underweight"
+    # print(category)
+
+    # How to create a list + loop for many numbers, rather than just 27: 
+
+    patients = [20,25,16,30]
+
+    # wrap the folling to a function 
+    for bmi in patients: 
+        if bmi >= 30: 
+            category = "Overweight"
+        elif bmi >= 18.5:
+            category = "Normal"
+        else:
+            category = "Underweight"
+     print(category)
+    """,
+    name="_"
+)
 
 
 @app.cell
