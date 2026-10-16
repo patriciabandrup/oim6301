@@ -480,6 +480,27 @@ def _(holdings):
     return
 
 
+@app.cell
+def _(holdings):
+    ticker_cost = {}
+    for _symbol, _shares, _price in holdings: 
+        ticker_cost[_symbol] = _shares * _price
+    print(ticker_cost)
+    return (ticker_cost,)
+
+
+@app.cell
+def _(ticker_cost):
+    biggest_ticker = None
+    biggest_cost = 0
+    for _ticker, _cost in ticker_cost.items():
+        if _cost > biggest_cost: 
+            biggest_ticker = _ticker
+            biggest_cost = _cost
+    print(f'The most expensive holding is {biggest_ticker} at ${biggest_cost:.2f}')
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -492,6 +513,14 @@ def _(mo):
     > *Check yourself: gains of $7,900.00 in all, $6,700.00 on AAPL and $1,200.00 on MSFT. Left: 20 AAPL bought at $240.00, and 10 MSFT at $380.00.*
     >
     > **Going further.** Work it out again with **average cost**, where a sale uses the average price of every share held. The total changes. Which rule would the client rather report this year, and why?
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *For each trade, I would keep the date, the ticker, the number of shares, and whether they buy or sell. Since the usual rule is first in, first out, I would process the date in ascending order, keeping track of the shares bought for each ticker in a queue. When a sell is processed, I would remove shares from the front of the queue for that ticker, matching them with the earliest buys to calculate the gain or loss. If the amount sold is larger than the shares in the front of the queue, I would continue to the next entry in the queue until the entire sell order is matched, calculating the gain or loss for each portion separately. Aftter processing all trades, the queue for each ticker will contain the remaining shares that have not been sold, along with their purchase dates and prices, which represent the current holdings.*
     """)
     return
 
@@ -509,6 +538,41 @@ def _():
         ("2026-08-12", "AAPL", "sell", 40, 250.00),
     ]
     year_trades
+    return (year_trades,)
+
+
+@app.cell
+def _(year_trades):
+    holdings_queue ={}
+    # {} is for dictionary 
+    # each key will be a ticker
+
+    for _date, _ticker, _action, _shares, _price in year_trades:
+    # this unpacks each trade tuple into 5 names at once
+        if _ticker not in holdings_queue:
+            holdings_queue[_ticker] = []
+            # creates empty list
+        print(_date, _ticker, _action, _shares, _price)
+    # this confirms the loop is being read correctly 
+        if _action == 'buy':
+            holdings_queue[_ticker].append([_date, _shares])
+        if _action == 'sell':
+            shares_to_sell =_shares
+            while shares_to_sell > 0:
+                oldest_buy = holdings_queue[_ticker][0]
+            buy_date = oldest_buy[0]
+            buy_shares = oldest_buy[1]
+            buy_price = oldest_buy[2]
+
+            shares_sold = min(shares_to_sell, buy_shares)
+
+            gain = shares_sold *(_price - buy_price)
+            print(_date,_ticker, shares_sold)
+
+            oldest_buy[1]-= shares_sold
+
+            if oldest_buy[1] == 0:
+                holdings_queue[_ticker].pop(0)
     return
 
 
