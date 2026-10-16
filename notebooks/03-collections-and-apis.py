@@ -150,9 +150,8 @@ def _():
     return
 
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
+app._unparsable_cell(
+    r"""
     ### Your written answers
 
     Several questions below ask for a sentence. This cell is where they go. Click into it, write under the letter, and press `Ctrl+Enter` (Windows) or `Cmd+Enter` (macOS).
@@ -164,8 +163,9 @@ def _(mo):
     **D ·**
 
     **G ·**
-    """)
-    return
+    """,
+    column=None, disabled=False, hide_code=True, name="_"
+)
 
 
 @app.cell(hide_code=True)
@@ -798,16 +798,23 @@ def _(babson_weather):
     return
 
 
-@app.cell
-def _():
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     **F · Another town.** Search for `Wellesley` the way the misspelled search did, with the correct spelling. Take the first place out of `results`, then its `latitude`, `longitude` and `admin1`. *Check yourself: latitude 42.29649, in Massachusetts.*
     """)
+    return
+
+
+@app.cell
+def _(requests):
+    wellesley_reply = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search?name=Wellesley&count=1",
+        timeout=10,
+    )
+    wellesley_results = wellesley_reply.json()
+    first_place = wellesley_results["results"][0]
+    print(f'Wellesley, {first_place["admin1"]}: ({first_place["latitude"]}, {first_place["longitude"]})')
     return
 
 
@@ -821,6 +828,27 @@ def _(mo):
     return
 
 
+@app.cell
+def _(requests):
+    babsonPark_reply = requests.get(
+        "https://geocoding-api.open-meteo.com/v1/search?name=Babson%20Park&count=1",
+        timeout=10,
+    )
+    babsonPark_results = babsonPark_reply.json()
+    bp_first_place = babsonPark_results["results"][0]
+    bp_state = bp_first_place["admin1"]
+    print(f'Babson Park is in {bp_state}')
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *The code [0] assumes the first search result is always the one you meant. Since "Babson Park" could match multiple real places, always taking the first result risks returning the wrong location's data, with no error to warn you that a different match might have been intended.*
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -829,10 +857,62 @@ def _(mo):
     return
 
 
+@app.cell
+def _(requests):
+    daily_url = (
+        "https://api.open-meteo.com/v1/forecast"
+        "?latitude=42.2987&longitude=-71.2595"
+        "&daily=temperature_2m_max,temperature_2m_min"
+        "&temperature_unit=fahrenheit"
+        "&timezone=America/New_York"
+    )
+    daily_reply = requests.get(daily_url, timeout=10)
+    daily_weather = daily_reply.json()
+    daily_weather["daily"]
+    return (daily_weather,)
+
+
+@app.cell
+def _(daily_weather):
+    daily_forecast = []
+    for _i in range(len(daily_weather["daily"]["time"])):
+        daily_forecast.append({
+            "date": daily_weather["daily"]["time"][_i],
+            "high": daily_weather["daily"]["temperature_2m_max"][_i],
+            "low": daily_weather["daily"]["temperature_2m_min"][_i],
+        })
+    daily_forecast
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     > **Advanced · I · A second API.** Kraken, a cryptocurrency exchange, publishes prices with no key: `https://api.kraken.com/0/public/Ticker?pair=XBTUSD`. Request it, then change the pair to `XBTUSX`. Compare the status code and the reply with Open-Meteo's misspelled search. Both answer 200 to a request that failed, and each shows the failure in its own way.
+    """)
+    return
+
+
+@app.cell
+def _(requests):
+    kraken_url = "https://api.kraken.com/0/public/Ticker?pair=XBTUSD"
+    kraken_reply = requests.get(kraken_url, timeout=10)
+    kraken_reply.status_code, kraken_reply.json()
+    return
+
+
+@app.cell
+def _(requests):
+    kraken_bad_url = "https://api.kraken.com/0/public/Ticker?pair=XBTUSX"
+    kraken_bad_reply = requests.get(kraken_bad_url, timeout=10)
+    kraken_bad_reply.status_code, kraken_bad_reply.json()
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    *Both Kraken's invalid request and Open-Meteo's misspelled search answered with status 200, even though both requests effectively failed. They show it differently: Kraken puts an explicit error message inside its own `"error"` field, while Open-Meteo's failure shows up only as a missing `"results"` key, with no error message at all. In both cases, the status code alone would not tell you the request failed — you have to read the reply itself.*
     """)
     return
 
