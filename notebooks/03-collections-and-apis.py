@@ -543,41 +543,89 @@ def _():
 
 @app.cell
 def _(year_trades):
-    holdings_queue ={}
-    # {} is for dictionary 
+    holdings_queue = {}
+    total_gain = 0
+    ticker_gains = {}
+    # {} is for dictionary
     # each key will be a ticker
 
     for _date, _ticker, _action, _shares, _price in year_trades:
-    # this unpacks each trade tuple into 5 names at once
+        # this unpacks each trade tuple into 5 names at once
         if _ticker not in holdings_queue:
             holdings_queue[_ticker] = []
             # creates empty list
-        print(_date, _ticker, _action, _shares, _price)
-    # this confirms the loop is being read correctly 
+            ticker_gains[_ticker] = 0
+
         if _action == 'buy':
-            holdings_queue[_ticker].append([_date, _shares])
+            holdings_queue[_ticker].append([_date, _shares, _price])
+
         if _action == 'sell':
-            shares_to_sell =_shares
+            shares_to_sell = _shares
+
             while shares_to_sell > 0:
                 oldest_buy = holdings_queue[_ticker][0]
-            buy_date = oldest_buy[0]
-            buy_shares = oldest_buy[1]
-            buy_price = oldest_buy[2]
 
-            shares_sold = min(shares_to_sell, buy_shares)
+                buy_date = oldest_buy[0]
+                buy_shares = oldest_buy[1]
+                buy_price = oldest_buy[2]
 
-            gain = shares_sold *(_price - buy_price)
-            print(_date,_ticker, shares_sold)
+                shares_sold = min(shares_to_sell, buy_shares)
 
-            oldest_buy[1]-= shares_sold
+                gain = shares_sold * (_price - buy_price)
 
-            if oldest_buy[1] == 0:
-                holdings_queue[_ticker].pop(0)
+                total_gain = total_gain + gain
+                ticker_gains[_ticker] = ticker_gains[_ticker] + gain
+
+                oldest_buy[1] = oldest_buy[1] - shares_sold
+                shares_to_sell = shares_to_sell - shares_sold
+
+                if oldest_buy[1] == 0:
+                    holdings_queue[_ticker].pop(0)
+
+    print(f"Total gain: {total_gain}, "
+          f"Gains by ticker: {ticker_gains}, "
+          f"Remaining shares: {holdings_queue}")
     return
 
 
 @app.cell
-def _():
+def _(year_trades):
+    avg_shares = {}
+    avg_total_cost = {}
+    avg_total_gain = 0
+    avg_ticker_gains = {}
+
+    for _date, _ticker, _action, _shares, _price in year_trades:
+        if _ticker not in avg_shares:
+            avg_shares[_ticker] = 0
+            avg_total_cost[_ticker] = 0
+            avg_ticker_gains[_ticker] = 0
+
+        if _action == 'buy':
+            avg_shares[_ticker] = avg_shares[_ticker] + _shares
+            avg_total_cost[_ticker] = avg_total_cost[_ticker] + _shares * _price
+
+        if _action == 'sell':
+            _average_price = avg_total_cost[_ticker] / avg_shares[_ticker]
+            _gain = _shares * (_price - _average_price)
+
+            avg_total_gain = avg_total_gain + _gain
+            avg_ticker_gains[_ticker] = avg_ticker_gains[_ticker] + _gain
+
+            avg_total_cost[_ticker] = avg_total_cost[_ticker] - _shares * _average_price
+            avg_shares[_ticker] = avg_shares[_ticker] - _shares
+
+    print(f"Total gain (average cost): {avg_total_gain:.2f}, "
+          f"Gains by ticker: {avg_ticker_gains}, "
+          f"Remaining shares: {avg_shares}")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *The client would rather report the total gain using the first method, since it shows a higher total gain this year ($7,900.00 vs. $7,533.33 under average cost), which would make the year's investment performance look stronger when reported.*
+    """)
     return
 
 
