@@ -199,6 +199,32 @@ def _(mo):
     return
 
 
+@app.cell
+def _(holdings, retirement_holdings):
+    def count_shares(portfolio):
+        total = 0 
+        for _symbol, _shares, _price in portfolio:
+            total = total + _shares
+        return total
+    count_shares(holdings), count_shares(retirement_holdings)
+    return
+
+
+@app.cell
+def _(holdings, retirement_holdings):
+    def find_largest(portfolio):
+        largest_symbol = None
+        largest_cost = 0
+        for _symbol, _shares, _price in portfolio:
+            if _price * _shares > largest_cost:
+                largest_cost = _price * _shares
+                largest_symbol = _symbol
+        return largest_symbol, largest_cost
+
+    f'Largest holding: {find_largest(holdings)}, Largest retirement holding: {find_largest(retirement_holdings)}.'
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
