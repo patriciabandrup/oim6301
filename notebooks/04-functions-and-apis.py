@@ -235,6 +235,26 @@ def _(mo):
     return
 
 
+@app.cell
+def _(holdings):
+    def count_shares_print(portfolio):
+        total = 0
+        for _symbol, _shares, _price in portfolio:
+            total = total + _shares
+        print(total)
+
+    print(count_shares_print(holdings))
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *Using print instead of return means the function is designed for a human to look at, not for the rest of the program to use. It displays the total directly on screen, rather than handing back a value that could be stored and used elsewhere. When we run print(count_shares_print(holdings)), we see 600 printed, followed by None. The 600 comes from the print(total) line inside the function. The None comes from the outer print, which is displaying what the function returned — and since count_shares_print has no return, Python gives back None by default. Because of this, we can't do anything further with count_shares_print's result. There's no value stored to pass into another function or calculation, only None.*
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -370,6 +390,39 @@ def _(mo):
     return
 
 
+@app.cell
+def _(requests):
+    def get_temperature(town, state=None):
+        geo_reply = requests.get(
+            "https://geocoding-api.open-meteo.com/v1/search",
+            params={"name": town, "count": 10},
+            timeout=10,
+        )
+        results = geo_reply.json()["results"]
+
+        first_place = results[0]
+        if state is not None:
+            for place in results:
+                if place["admin1"] == state:
+                    first_place = place
+                    break
+
+        weather_reply = requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": first_place["latitude"],
+                "longitude": first_place["longitude"],
+                "current": "temperature_2m",
+                "temperature_unit": "fahrenheit",
+            },
+            timeout=10,
+        )
+        return weather_reply.json()["current"]["temperature_2m"]
+
+    get_temperature("Babson Park", "Massachusetts"), get_temperature("Wellesley")
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -379,6 +432,22 @@ def _(mo):
 
     *Check yourself: Dover, Wellesley, Cohasset, Needham, Westwood.*
     """)
+    return
+
+
+@app.cell
+def _(requests):
+    norfolk_income_reply = requests.get(
+        "https://oim.zhili.dev/ma/towns",
+        params={"county": "Norfolk", "sort": "income", "order": "desc", "per_page": 5},
+        timeout=10,
+    )
+    norfolk_income_reply.status_code, norfolk_income_reply.url
+    norfolk_income_page = norfolk_income_reply.json()
+    norfolk_income_page["items"]
+
+    for town in norfolk_income_page["items"]:
+        print(f'{town["name"]}: ${town["income_per_capita_dollars"]}')
     return
 
 
@@ -395,6 +464,60 @@ def _(mo):
 
     **Going further.** Write `town_history(name)`, which takes a town's name, makes both requests, and returns the history.
     """)
+    return
+
+
+@app.cell
+def _(requests):
+    Wellesley_dor_code_reply = requests.get(
+        "https://oim.zhili.dev/ma/towns",
+        params={"name": "Wellesley"},
+        timeout=10,
+    )
+    Wellesley_dor_code = Wellesley_dor_code_reply.json()["items"][0]["dor_code"]
+    Wellesley_dor_code
+
+    Wellesley_dor_code_history = requests.get(
+        f"https://oim.zhili.dev/ma/towns/{Wellesley_dor_code}/history",
+        params={"from_year": 2026, "to_year": 2026},
+        timeout=10,
+    )
+    history = Wellesley_dor_code_history.json()
+    year_2026 = history["years"][0]
+    dor_code = history["dor_code"]
+    average_value_2026 = year_2026["average_single_family_value_dollars"]
+    tax_rate_2026 = year_2026["residential_rate_per_thousand"]
+    reported_bill_2026 = year_2026["average_single_family_bill_dollars"]
+    dor_code, average_value_2026, reported_bill_2026
+    return average_value_2026, reported_bill_2026, tax_rate_2026
+
+
+@app.cell
+def _(average_value_2026, reported_bill_2026, tax_rate_2026):
+    computed_bill_2026 = average_value_2026 * tax_rate_2026 / 1000
+    computed_bill_2026, reported_bill_2026
+    return
+
+
+@app.cell
+def _(requests):
+    # wrapped function
+    def town_history(name):
+        towns_reply = requests.get(
+            "https://oim.zhili.dev/ma/towns",
+            params={"name": name},
+            timeout=10,
+        )
+        dor_code = towns_reply.json()["items"][0]["dor_code"]
+
+        history_reply = requests.get(
+            f"https://oim.zhili.dev/ma/towns/{dor_code}/history",
+            params={"from_year": 2026, "to_year": 2026},
+            timeout=10,
+        )
+        return history_reply.json()
+
+    town_history("Wellesley")
     return
 
 
@@ -480,7 +603,38 @@ def _(mo):
 
 
 @app.cell
-def _():
+def _(get_page):
+    def get_all_towns():
+        first_page = get_page(1)
+        all_towns = first_page["items"]
+        pages = first_page["pagination"]["pages"]
+        for page in range(2, pages + 1):
+            next_page = get_page(page)
+            all_towns = all_towns + next_page["items"]
+        return all_towns
+
+    all_towns = get_all_towns()
+    len(all_towns), all_towns[0]["name"], all_towns[-1]["name"]
+    return (all_towns,)
+
+
+@app.cell
+def _(all_towns):
+    highest_town = None
+    highest_bill = 0
+    lowest_town = None
+    lowest_bill = None
+
+    for _town in all_towns:
+        bill = _town["average_single_family_bill_dollars"]
+        if bill > highest_bill:
+            highest_bill = bill
+            highest_town = _town["name"]
+        if lowest_bill is None or bill < lowest_bill:
+            lowest_bill = bill
+            lowest_town = _town["name"]
+
+    (highest_town, highest_bill), (lowest_town, lowest_bill)
     return
 
 
@@ -535,13 +689,36 @@ def _(mo):
 
 @app.cell
 def _(requests):
+    norton_reply = requests.get(
+        "https://oim.zhili.dev/ma/towns",
+        params={"name": "Norton"},
+        timeout=10,
+    )
+    norton = norton_reply.json()["items"][0]
+    town_name = norton["name"]
+    town_bill = norton["average_single_family_bill_dollars"]
+    town_population = norton["population"]
+    print(f"{town_name} has a population of {town_population} and an average single family bill of ${town_bill}.")
+    return town_bill, town_name, town_population
+
+
+@app.cell
+def _(requests, town_bill, town_name, town_population):
     board_reply = requests.post(
         "https://oim.zhili.dev/message",
         headers={"x-token": "patriciabandrup"},
-        json={"message": f"Hi from Zhi"},
+        json={"message": f"{town_name} has a population of {town_population} and an average single family bill of ${town_bill}."},
         timeout=10,
     )
     board_reply.status_code, board_reply.json()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    *With `headers=` removed, the server answered 401, with `{"detail": "Missing x-token header"}`. 401 means "unauthorized": the request was well-formed, but the server refuses to act on it because it doesn't know who's asking. The token is how the server attaches a message to a person to prevent the flooding of unauthorized comments and requests made to the live server.*
+    """)
     return
 
 
