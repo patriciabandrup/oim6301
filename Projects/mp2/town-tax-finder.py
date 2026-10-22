@@ -292,7 +292,12 @@ def _(mo):
 
 
 @app.cell
-def _():
+def _(mo):
+    mo.md(r"""
+    **Input Change Prediction:**
+
+    By changing the input value of `budget_dollars` from 700000 to 500000, I would expect that fewer towns would have an `average_single_family_value_dollars` that falls under this lower budget, and the couple would have fewer towns as options to live in.
+    """)
     return
 
 
