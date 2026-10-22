@@ -4,9 +4,16 @@ __generated_with = "0.24.2"
 app = marimo.App(width="medium")
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Review of Session 5
+    """)
+    return
+
+
 @app.cell
 def _():
-    # Review of Session 5
     # Dictionaries take {}
     # Lists take []
     # Q1
@@ -65,9 +72,11 @@ def _():
     return
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     # Beginning of Session 6 Notes (10/14)
+    """)
     return
 
 
@@ -126,23 +135,119 @@ app._unparsable_cell(
 )
 
 
-@app.cell
-def _():
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Notebook 5 (interesting codes)
+    """)
     return
 
 
 @app.cell
 def _():
-    return
+    # BEGINNING OF SETUP 
+    import csv
+
+    import altair as alt
+    import polars as pl
+    import requests
+
+    return alt, csv, pl, requests
 
 
 @app.cell
-def _():
-    return
+def _(requests):
+    ma_counties = requests.get("https://oim.zhili.dev/ma/counties", timeout=10).json()
+    ma_counties[0], len(ma_counties)
+    return (ma_counties,)
 
 
 @app.cell
-def _():
+def _(requests):
+    def get_towns(county):
+        towns_reply = requests.get(
+            "https://oim.zhili.dev/ma/towns",
+            params={"county": county, "per_page": 100},
+            timeout=10,
+        )
+        return towns_reply.json()["items"]
+
+    return (get_towns,)
+
+
+@app.cell
+def _(get_towns, ma_counties):
+    ma_towns = []
+    for _county in ma_counties:
+        for _town in get_towns(_county["name"]):
+            ma_towns.append(_town)
+    len(ma_towns)
+    return (ma_towns,)
+
+
+@app.cell
+def _(csv, ma_towns, mo):
+    csv_columns = [
+        "name",
+        "county",
+        "population",
+        "income_per_capita_dollars",
+        "average_single_family_value_dollars",
+        "average_single_family_bill_dollars",
+    ]
+
+    ma_towns_csv = mo.notebook_dir().parent / "data" / "ma-towns.csv"
+    ma_towns_csv.parent.mkdir(exist_ok=True)
+
+    with open(ma_towns_csv, "w", newline="", encoding="utf-8") as _file:
+        _writer = csv.DictWriter(_file, fieldnames=csv_columns, extrasaction="ignore") #each row is a dictionary
+        _writer.writeheader()
+        _writer.writerows(ma_towns)
+
+    ma_towns_csv.name
+    return (ma_towns_csv,)
+
+
+@app.cell
+def _(ma_towns_csv, pl):
+    town_table = pl.read_csv(ma_towns_csv)
+    town_table
+    return (town_table,)
+
+
+@app.cell
+def _(town_table):
+    # Which 
+    higest_income = (
+        town_table.sort("income_per_capita_dollars", descending=True)
+        .head(10)
+        .select("name", "county", "income_per_capita_dollars")
+    )
+    higest_income
+    return (higest_income,)
+
+
+@app.cell
+def _(alt, higest_income, mo):
+    higest_income_chart = mo.ui.altair_chart(
+        higest_income.plot.bar(
+            y=alt.Y("name", sort="-x", title="Town"),
+            x=alt.X("income_per_capita_dollars", title="Income per capita (dollars)"),
+            color=alt.Color("county", title="County"),
+            tooltip=["name", "county", "income_per_capita_dollars"],
+        ).properties(title="The 10 Massachusetts towns with the highest income per capita")
+    )
+    higest_income_chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # THIS CODE MAKES THE CHART LOOK GOOD!!
+    # color=alt.Color("county", title="County"),
+    #        tooltip=["name", "county", "income_per_capita_dollars"],
+    """)
     return
 
 
@@ -165,7 +270,7 @@ def _():
 def _():
     import marimo as mo
 
-    return
+    return (mo,)
 
 
 @app.cell

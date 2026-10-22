@@ -216,8 +216,22 @@ def _(towns_from_file):
 
 
 @app.cell
-def _():
-    # 2. 
+def _(towns_from_file):
+    # 2. Which town has the fewest people, and which has the most?
+    smallest_town = None
+    smallest_population = None
+    largest_town = None
+    largest_population = None
+    for _town in towns_from_file:
+        population = int(_town["population"])
+        if smallest_population is None or population < smallest_population:
+            smallest_population = population
+            smallest_town = _town["name"]
+        if largest_population is None or population > largest_population:
+            largest_population = population
+            largest_town = _town["name"]
+
+    f'Largest is {largest_town} with {largest_population}. Smallest is {smallest_town} with {smallest_population}.'
     return
 
 
@@ -342,6 +356,30 @@ def _(mo):
     return
 
 
+@app.cell
+def _(pl, town_table):
+    (
+        town_table
+        .group_by("county")
+        .agg(pl.len().alias("towns"))
+        .sort("towns", descending=True)
+    )
+    return
+
+
+@app.cell
+def _(pl, town_table):
+    # Which five towns of more than 50,000 people have the highest average single-family bill? Use .filter(), .sort() and .head(). Check yourself: Brookline, Newton, Cambridge, Somerville, Quincy.
+
+    (
+        town_table.filter(pl.col("population") >= 50000)
+        .select("name", "population", "county", "average_single_family_bill_dollars")
+        .sort("average_single_family_bill_dollars", descending=True)
+        .head(5)
+    )
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -385,6 +423,33 @@ def _(mo):
 
     **Going further.** Write a SQL query of your own on `town_table`, and check its answer in polars.
     """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Based on the million-dollar count, I predict Middlesex and Essex will go down when the bar moves to $2,000,000. In the share table, both counties sit in the middle: their share of million-dollar towns is not among the highest, yet they have a large number of towns at or near the $1,000,000 bar, so more of their towns are at risk of falling below a higher bar.
+
+    No county's count can go up. Raising the bar only removes towns from the count, it never adds any: every town that clears $2,000,000 already cleared $1,000,000, so it was already counted.
+    """)
+    return
+
+
+@app.cell
+def _(pl, town_table):
+    million_dollar_share2 = (
+        town_table.group_by("county")
+        .agg(
+            pl.len().alias("towns"),
+            (pl.col("average_single_family_value_dollars") >= 2_000_000)
+            .sum()
+            .alias("million_dollar_towns"),
+        )
+        .with_columns((pl.col("million_dollar_towns") / pl.col("towns")).alias("share"))
+        .sort("share", descending=True)
+    )
+    million_dollar_share2
     return
 
 
@@ -438,6 +503,45 @@ def _(mo):
 
     **Going further.** Color the bars or dots by a column with `color=`, and explain what the colors add.
     """)
+    return
+
+
+@app.cell
+def _(town_table):
+    town_table.columns
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    # Which towns have the highest income per capita?
+    """)
+    return
+
+
+@app.cell
+def _(town_table):
+    higest_income = (
+        town_table.sort("income_per_capita_dollars", descending=True)
+        .head(10)
+        .select("name", "county", "income_per_capita_dollars")
+    )
+    higest_income
+    return (higest_income,)
+
+
+@app.cell
+def _(alt, higest_income, mo):
+    higest_income_chart = mo.ui.altair_chart(
+        higest_income.plot.bar(
+            y=alt.Y("name", sort="-x", title="Town"),
+            x=alt.X("income_per_capita_dollars", title="Income per capita (dollars)"),
+            color=alt.Color("county", title="County"),
+            tooltip=["name", "county", "income_per_capita_dollars"],
+        ).properties(title="The 10 Massachusetts towns with the highest income per capita")
+    )
+    higest_income_chart
     return
 
 
