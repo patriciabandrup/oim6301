@@ -21,7 +21,7 @@ def _():
     import polars as pl
     import requests
 
-    return (requests,)
+    return pl, requests
 
 
 @app.cell(hide_code=True)
@@ -92,6 +92,15 @@ def _(mo):
     return
 
 
+@app.cell
+def _():
+    county = "Middlesex"
+    budget_dollars = 700000
+    tax_limit_dollars = 8000
+    fiscal_year = 2026
+    return budget_dollars, county, fiscal_year, tax_limit_dollars
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -102,6 +111,77 @@ def _(mo):
     return
 
 
+@app.cell
+def _(county, requests):
+    def get_towns(county):
+        reply = requests.get(
+            "https://oim.zhili.dev/ma/towns",
+            params={"county": county, "per_page": 100},
+            timeout=10,
+        )
+        return reply.json()
+
+    towns_reply = get_towns(county)
+    middlesex_towns = towns_reply["items"]
+    towns_total = towns_reply["pagination"]["total"]
+    len(middlesex_towns), towns_total
+    return middlesex_towns, towns_total
+
+
+@app.cell
+def _(requests):
+    def get_town_history(dor_code, fiscal_year):
+        reply = requests.get(
+            f"https://oim.zhili.dev/ma/towns/{dor_code}/history",
+            params={"from_year": fiscal_year, "to_year": fiscal_year},
+            timeout=10,
+        )
+        return reply.json()
+
+    return (get_town_history,)
+
+
+@app.cell
+def _(fiscal_year, get_town_history, middlesex_towns):
+    town_year_records = []
+    missing_count = 0
+    for _town in middlesex_towns:
+        _history = get_town_history(_town["dor_code"], fiscal_year)
+        _year_data = None
+        for _year in _history["years"]:
+            if _year["fiscal_year"] == fiscal_year:
+                _year_data = _year
+        if _year_data is None:
+            missing_count = missing_count + 1
+        else:
+            town_year_records.append({
+                "name": _town["name"],
+                "average_single_family_value_dollars": _year_data["average_single_family_value_dollars"],
+                "residential_rate_per_thousand": _year_data["residential_rate_per_thousand"],
+                "average_single_family_bill_dollars": _year_data["average_single_family_bill_dollars"],
+            })
+
+    len(town_year_records), missing_count
+    return (town_year_records,)
+
+
+@app.cell
+def _(budget_dollars, tax_limit_dollars, town_year_records):
+    affordable_towns = []
+    for _record in town_year_records:
+        _fits_budget = _record["average_single_family_value_dollars"] <= budget_dollars
+        _fits_tax_limit = _record["average_single_family_bill_dollars"] < tax_limit_dollars
+        if _fits_budget and _fits_tax_limit:
+            affordable_towns.append(_record)
+
+    def get_total(end_record):
+        return end_record["average_single_family_bill_dollars"]
+    affordable_towns = sorted(affordable_towns, key=get_total)
+
+    len(affordable_towns)
+    return (affordable_towns,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -109,6 +189,30 @@ def _(mo):
 
     Print your result table with `print` and f-strings, with the columns lined up. Then use an f-string to print one sentence that answers section 1 and includes the numbers from your results.
     """)
+    return
+
+
+@app.cell
+def _(affordable_towns):
+    print(f"{'Town':<15}{'Home Value':>15}{'Tax Rate':>12}{'Avg Bill':>12}")
+    for _r in affordable_towns:
+        print(f"{_r['name']:<15}{_r['average_single_family_value_dollars']:>15,}{_r['residential_rate_per_thousand']:>12}{_r['average_single_family_bill_dollars']:>12,}")
+    return
+
+
+@app.cell
+def _(
+    affordable_towns,
+    budget_dollars,
+    county,
+    tax_limit_dollars,
+    towns_total,
+):
+    _town_names = []
+    for _r in affordable_towns:
+        _town_names.append(_r["name"])
+    _names_text = ", ".join(_town_names)
+    print(f"For a budget of ${budget_dollars:,} and a tax limit of ${tax_limit_dollars:,}, {len(affordable_towns)} of {towns_total} towns in {county} County qualify, cheapest bill first: {_names_text}.")
     return
 
 
@@ -122,12 +226,46 @@ def _(mo):
     return
 
 
+@app.cell
+def _(affordable_towns, pl):
+    affordable_table = pl.DataFrame(affordable_towns)
+    affordable_table.sort("average_single_family_bill_dollars")
+    return
+
+
+@app.cell
+def _(town_year_records, towns_total):
+    len(town_year_records), towns_total
+    return
+
+
+@app.cell
+def _(county, requests, town_year_records):
+    _check_reply = requests.get(
+        "https://oim.zhili.dev/ma/towns",
+        params={"county": county, "per_page": 100},
+        timeout=10,
+    )
+    _api_total = _check_reply.json()["pagination"]["total"]
+
+    len(town_year_records), _api_total
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## 7. Working With the Agent
 
     Describe one piece of AI output you did not accept as-is: what it gave you, what you changed, and how you knew. Point to the commit or cell. If the agent got it right the first time, explain how you verified it; the check in section 6 is enough.
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    *When I was trying to sort the new set of towns that passed our filters, which we had labeled `affordable_towns`, I needed to first show the towns starting from the smallest `average_single_family_bill_dollars`. When my agent edited my code, it gave me a return using `lambda town: town["average_single_family_bill_dollars"]`. Trying to understand the term "lambda," I learned it is a shorthand, unnamed function for calling every record and returning the number to sort by. This is similar to writing `def get_total():`, a more familiar line of syntax. I switched the code to use `def` instead, and redid that section myself, because I was able to track and see each element of the code I used, and could easily trace back my steps and function names.*
     """)
     return
 
@@ -141,6 +279,20 @@ def _(mo):
 
     Choose one change to what the tool does, such as another town or another rule. You can change one value in your Inputs cell. Write what you expect to change, commit with the message `mp2: prediction`, make the change, run the notebook, and record what happened and whether it matched your prediction.
     """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    1. When converting my affordable housing table from Python to Polars, I initially used pl.read_csv(town_year_records) because I thought I needed to upload a CSV file. However, pl.read_csv is used for actual CSV files or CSV-formatted text, while what I had made as town_year_records is a list of dictionaries could be used. Since my data was already written in Python, I should use pl.DataFrame, which converts the list of records directly into a table.This works because pl.DataFrame is designed to turn a list of dictionaries into a table, with the dictionary keys becoming column names. pl.read_csv would only be appropriate if I were reading an actual CSV file.
+    2. When setting up my initial empty lists for town-year records, my agent also created a running total called missing_count. I was confused about why we needed a separate count instead of a list to track missing town-year combinations. After asking my agent, I learned that missing_count is a simple tally of how many records are missing or incomplete, without storing the records themselves. A list would store each missing record for later inspection. Since I only needed to know how many were missing, a counter was more efficient. This helped me understand that counters are useful for tracking quantities, while lists are better when I need to retain the actual data.
+    """)
+    return
+
+
+@app.cell
+def _():
     return
 
 
