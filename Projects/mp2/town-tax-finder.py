@@ -13,6 +13,17 @@ def _():
     return (mo,)
 
 
+@app.cell
+def _():
+    import csv
+
+    import altair as alt
+    import polars as pl
+    import requests
+
+    return (requests,)
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -34,6 +45,14 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    *In this case, a couple looking for an "affordable" ($700,000) single family house in Middlesex county would use this tool. If we scaled the tool to expand our search to other counties or price ranges, we could easily adjust the input parameters so other potential homebuyers could use it. Through this tool, the couple can make informed decisions on which towns to focus their home search on, based on reported average home prices and the property tax bills that come along with homeownership, allowing them to move forward in the home search process knowing they have accounted for both the upfront cost of the home and the ongoing expenses associated with property taxes.*
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 2. My Plan Before AI
 
     Before asking your agent anything, open the API address in your browser and read the response. Then describe your solution in at least five lines, in order and in plain words. Answer these questions:
@@ -44,6 +63,21 @@ def _(mo):
     - Which check will you use in section 6, and which two numbers should agree?
 
     Commit this plan with the message `mp2: plan before AI`.
+    """)
+    return
+
+
+@app.cell
+def _(requests):
+    ma_endpoints = requests.get("https://oim.zhili.dev/ma", timeout=10).json()
+    ma_endpoints 
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    *First I will call the API's Massachusetts endpoints, which gives current, updated data. I will then write a .get function  to request and return every town in a given county -- even though we are specifically looking at Middlesex. Next, I will write a .get function with dor_code and fiscal_year parameters to request the API for that fiscal year and return the towns' figures for the year. I will then write a function that checks each town's year data and keeps only the towns whose average single-family home value is no larger than the budget (\$700,000) and whose average bill is below the tax limit (\$8,000), returning the town name, home value, and the residential tax bill. I will sort those towns by average single family value, lowest to highest. I will print the results as a table, then print one sentence naming the towns that passed the filter. To make sure my numbers are right I will check that the number of towns collected for Middlesex matches pagination.total from the API response before filtering, so I can confirm no towns were dropped.*
     """)
     return
 
