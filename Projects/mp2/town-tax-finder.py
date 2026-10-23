@@ -21,7 +21,7 @@ def _():
     import polars as pl
     import requests
 
-    return pl, requests
+    return alt, pl, requests
 
 
 @app.cell(hide_code=True)
@@ -301,6 +301,16 @@ def _(mo):
     return
 
 
+@app.cell
+def _(mo):
+    mo.md(r"""
+    **Input Change Reflection:**
+
+    After changing budget_dollars from $700,000 to $500,000, the number of affordable towns in Middlesex County dropped from 12 to only 4. This matches my prediction: lowering the budget made the filter stricter, so fewer towns' average home values fell under the new, lower limit, leaving the couple with fewer options.
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -314,9 +324,55 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    Rank the same towns by tax rate in place of the bill. Does the order change, and why?
+    """)
+    return
+
+
+@app.cell
+def _(affordable_towns, pl):
+    affordable_tax_table = pl.DataFrame(affordable_towns)
+    affordable_tax_table.sort("residential_rate_per_thousand")
+    return (affordable_tax_table,)
+
+
+@app.cell
+def _(affordable_tax_table, alt):
+    affordable_tax_chart = alt.Chart(affordable_tax_table).mark_bar().encode(
+        x=alt.X("residential_rate_per_thousand", title="Tax Rate"),
+        y=alt.Y("name", sort="x", title="Town"),
+        tooltip=["name", "average_single_family_value_dollars", "residential_rate_per_thousand", "average_single_family_bill_dollars"],
+    ).properties(
+        title="Affordable Middlesex Towns, Lowest Rate First",
+        width=500,
+        height=300,
+    )
+    affordable_tax_chart
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    In sorting the towns by their tax rate (`residential_rate_per_thousand`), we see a shift in the chart. Initially, when they were sorted and ranked by cheapest bill (`average_single_family_bill_dollars`), we valued the impact of the amount of money spent per year on property taxes. By looking at towns in terms of their tax rate, we can see which towns impose a higher tax burden despite the value of the property. For example, Ashby was in the middle of the first list in regards to having the cheapest bill; however, now it is at the very bottom of the list with a 15.76 tax rate per thousand dollars, making it one of the towns with the highest tax burden relative to property values. When we only looked at the bill in dollars, we didn't necessarily put too much importance on this, since `average_single_family_value_dollars` was low and offset that high rate. This matters because the value of a house can appreciate over time, while the tax rate stays relatively high, meaning residents in these towns may face a growing tax burden even if their initial bill seemed low or moderate compared to other towns.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## 10. Time Spent
 
     Enter about how many hours this project took outside class, as one number. This is not graded.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    4.5 hours
     """)
     return
 
