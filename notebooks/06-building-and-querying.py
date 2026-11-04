@@ -213,6 +213,17 @@ def _(ask):
 def _(ask):
     ask("""
         SELECT name, population, income_per_capita_dollars
+        FROM towns 
+        WHERE  name IN ('Worchester', 'Amherst', 'Provincetown', 'Concord', 'Quincy')
+        LIMIT 5
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT name, population, income_per_capita_dollars
         FROM towns
         ORDER BY random()
         LIMIT 5
