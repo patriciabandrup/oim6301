@@ -252,6 +252,25 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask, database, duckdb):
+    with duckdb.connect(database) as _con:
+        _con.execute("DROP TABLE IF EXISTS town_bills")
+        _con.execute("""
+            CREATE TABLE town_bills (
+                town_name                          VARCHAR NOT NULL REFERENCES towns(name),
+                year                               INTEGER NOT NULL,
+                average_single_family_bill_dollars INTEGER CHECK (average_single_family_bill_dollars >= 0),
+                PRIMARY KEY (town_name, year)
+            )
+        """)
+        _con.execute("INSERT INTO town_bills VALUES ('Wellesley', 2022, 14247)")
+        _con.execute("INSERT INTO town_bills VALUES ('Wellesley', 2023, 15008)")
+
+    ask("SELECT * FROM town_bills")
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -285,6 +304,33 @@ def _(mo):
 
     **Going further.** Find a rule the scenario of your database project states that a constraint cannot hold, and write the query that checks it instead.
     """)
+    return
+
+
+@app.cell
+def _(database, duckdb):
+    try:
+        with duckdb.connect(database) as _con:
+            _con.execute("INSERT INTO towns VALUES ('Boston', 'Suffolk', 100, 50000, 5000)")
+        duplicate_name_message = "accepted"
+    except duckdb.ConstraintException as _error:
+        duplicate_name_message = str(_error).splitlines()[0]
+
+    try:
+        with duckdb.connect(database) as _con:
+            _con.execute("INSERT INTO towns VALUES ('Empty Town', 'Suffolk', 0, 50000, 5000)")
+        zero_population_message = "accepted"
+    except duckdb.ConstraintException as _error:
+        zero_population_message = str(_error).splitlines()[0]
+
+    try:
+        with duckdb.connect(database) as _con:
+            _con.execute("INSERT INTO towns VALUES ('New Town', 'Atlantis', 100, 50000, 5000)")
+        bad_county_message = "accepted"
+    except duckdb.ConstraintException as _error:
+        bad_county_message = str(_error).splitlines()[0]
+
+    duplicate_name_message, zero_population_message, bad_county_message
     return
 
 
