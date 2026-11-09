@@ -70,4 +70,4 @@ One row of `trades` is one buy or sell made by one portfolio in one asset on one
 One row of `closing_prices` is one asset's closing price on one trading day.
 
 # 4. **Design Choices.**
-db: add the question and the plan
+I used asset_id as the main key for the assets table because the club’s real data includes a ticker change over time, so the asset itself needs one stable identity for its key. The optional relationship are mostly at the top of the chain: a member can have no portfolios, a portfolio can have no trades yet, and a strategy label can be blank, while each individual trade still belongs to exactly one member’s portfolio and exactly one asset. The rule that a portfolio cannot sell more units than it currently owns is not something the table can enforce by itself because it depends on the running total across earlier trades. My agent suggested a simpler table with only current holdings, but I did not use it because the club wants a full trade history and a clean audit trail, so I kept separate trades and closing_prices tables instead.

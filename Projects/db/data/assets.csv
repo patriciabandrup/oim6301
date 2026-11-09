@@ -1,0 +1,13 @@
+asset_id,ticker,asset_name,asset_type,sector
+1,AAPL,Apple,stock,Technology
+2,MSFT,Microsoft,stock,Technology
+3,NVDA,NVIDIA,stock,Semiconductors
+4,XOM,Exxon Mobil,stock,Energy
+5,VTI,Vanguard Total Stock Market ETF,etf,Broad Market
+6,QQQ,Invesco NASDAQ 100 ETF,etf,Technology
+7,BTC,Bitcoin,crypto,Digital Assets
+8,ETH,Ethereum,crypto,Digital Assets
+9,META,Meta Platforms,stock,Communication Services
+10,JPM,JPMorgan Chase,stock,Financials
+11,JNJ,Johnson & Johnson,stock,Healthcare
+12,SPY,SPDR S&P 500 ETF,etf,Broad Market

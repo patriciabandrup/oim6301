@@ -1,0 +1,13 @@
+portfolio_id,member_id,portfolio_name,created_on,strategy_label
+1,1,Portfolio 1,2024-02-02,Value
+2,2,Portfolio 2,2024-03-03,Income
+3,3,Portfolio 3,2024-04-04,Momentum
+4,4,Portfolio 4,2024-05-05,Balanced
+5,5,Portfolio 5,2024-06-06,Dividend
+6,6,Portfolio 6,2024-07-07,Growth
+7,7,Portfolio 7,2024-08-08,Value
+8,8,Portfolio 8,2024-09-09,Income
+9,9,Portfolio 9,2024-10-10,Momentum
+10,10,Portfolio 10,2024-11-11,Balanced
+11,11,Portfolio 11,2024-12-12,Dividend
+12,12,Portfolio 12,2024-01-13,Growth
