@@ -12,6 +12,8 @@ erDiagram
   PORTFOLIOS ||--o{ TRADES : makes
   ASSETS ||--o{ TRADES : trades
   ASSETS ||--o{ CLOSING_PRICES : has
+  ASSETS ||--o{ ASSET_TICKERS : named
+  CLOSING_PRICES ||--o{ TRADES : prices
 
   MEMBERS {
     int member_id PK
@@ -32,17 +34,23 @@ erDiagram
 
   ASSETS {
     int asset_id PK
-    string ticker
     string asset_name
     string asset_type
-    string sector
+    string sector "nullable for crypto"
+  }
+
+  ASSET_TICKERS {
+    int asset_id PK, FK
+    date valid_from PK
+    string ticker UK
+    date valid_to
   }
 
   TRADES {
     int trade_id PK
     int portfolio_id FK
     int asset_id FK
-    date trade_date
+    date trade_date FK
     string trade_side
     int quantity
     decimal price_per_unit
@@ -50,9 +58,8 @@ erDiagram
   }
 
   CLOSING_PRICES {
-    int closing_price_id PK
-    int asset_id FK
-    date price_date
+    int asset_id PK, FK
+    date price_date PK
     decimal close_price
   }
 ```
@@ -63,11 +70,13 @@ One row of `members` is one club member with one school email, class year, and j
 
 One row of `portfolios` is one paper portfolio owned by one member.
 
-One row of `assets` is one asset the club follows, identified by its ticker and its type and sector.
+One row of `assets` is one asset the club follows, identified by its stable `asset_id`, name, type, and sector. Crypto has no sector.
+
+One row of `asset_tickers` is one ticker symbol used by an asset during a date range. The Facebook asset has `FB` through June 8, 2022 and `META` starting June 9, 2022.
 
 One row of `trades` is one buy or sell made by one portfolio in one asset on one date.
 
-One row of `closing_prices` is one asset's closing price on one trading day.
+One row of `closing_prices` is one asset's closing price on one date. The `asset_id` and `price_date` together are its primary key.
 
 # 4. **Design Choices.**
-I used asset_id as the main key for the assets table because the club’s real data includes a ticker change over time, so the asset itself needs one stable identity for its key. The optional relationship are mostly at the top of the chain: a member can have no portfolios, a portfolio can have no trades yet, and a strategy label can be blank, while each individual trade still belongs to exactly one member’s portfolio and exactly one asset. The rule that a portfolio cannot sell more units than it currently owns is not something the table can enforce by itself because it depends on the running total across earlier trades. My agent suggested a simpler table with only current holdings, but I did not use it because the club wants a full trade history and a clean audit trail, so I kept separate trades and closing_prices tables instead.
+I used `asset_id` as the stable key because a ticker can change while the asset stays the same. The `asset_tickers` table records each ticker's effective dates. A member can have no portfolios, a portfolio can have no trades yet, and a strategy label can be blank. A trade has one portfolio, one asset, and one matching closing price; the database also prevents a portfolio from trading the same asset twice on one day. The rule that a portfolio cannot sell more units than it currently owns depends on earlier trades, so it is checked with a query rather than a table constraint. The club keeps trades and closing prices separately for a full history.
