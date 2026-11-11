@@ -468,8 +468,36 @@ def _(ask):
         FROM towns
         WHERE average_single_family_bill_dollars > 10000
         GROUP BY county
-        HAVING count(*) > 5
+        HAVING count(*) > 5 AND county LIKE '%sex'
         ORDER BY towns DESC
+    """)
+    return
+
+
+app._unparsable_cell(
+    """
+    ask(\"\"\"
+        SELECT county, count(*) AS towns
+        FROM towns
+        WHERE average_single_family_bill_dollars > 10000
+        GROUP BY county
+        -- HAVING count(*) > 5
+        ORDER BY towns DESC
+    \"\"\")
+    -- count function happens after GROUP function 
+    """,
+    name="_"
+)
+
+
+@app.cell
+def _(ask):
+    ask("""
+    SELECT county, count(*) as town_count, sum(population) as total_pop, round(avg(population)) as avg_pop, round(avg(average_single_family_bill_dollars),2) as avg_bill, max(population) as max_pop, min(population) as min_pop
+    FROM towns
+    GROUP BY county
+    ORDER BY total_pop DESC
+    LIMIT 5 
     """)
     return
 
@@ -498,10 +526,13 @@ def _(mo):
     return
 
 
-@app.cell
-def _(ask):
+app._unparsable_cell(
+    r"""
     ask("SELECT * FROM high_bill_towns_by_county ORDER BY towns DESC")
-    return
+    -- the view of high_bill_towns_by_county was created before
+    """,
+    name="_"
+)
 
 
 @app.cell(hide_code=True)
