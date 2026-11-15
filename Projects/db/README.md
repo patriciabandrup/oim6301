@@ -1,4 +1,4 @@
-# 1. **The Scenario.**
+Commit your prediction first. Before you answer any question, pick the question for section 3 below, Reading It Back. It has to use three tables or more. Write your prediction in that section and commit it with the message db: prediction. Keep the section where it is, after your answers.# 1. **The Scenario.**
 
 Option B: Babson Investment Club.
 

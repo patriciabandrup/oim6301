@@ -7,7 +7,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parent / "data"
 FIRST_DAY = date(2022, 1, 1)
 AS_OF = date(2022, 12, 31)
-SEED = 6301
+SEED = 1234
 ORDINARY_TRADE_COUNT = 500
 
 
