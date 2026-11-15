@@ -95,15 +95,28 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Write the SQL query for question 2 here. Leave its result as the cell's last expression.
+def _(ask):
+    ask(f"""
+        SELECT
+            m.member_id,
+            m.last_name,
+            count(DISTINCT p.portfolio_id) AS portfolio_count,
+            sum(CASE WHEN t.trade_side = 'BUY' THEN t.quantity * t.price_per_unit + t.fee ELSE 0 END) AS total_bought
+        FROM members AS m
+        LEFT JOIN portfolios AS p
+            ON p.member_id = m.member_id
+        LEFT JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+        GROUP BY m.member_id, m.last_name
+        ORDER BY m.member_id
+    """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    **Answer:** Write one sentence with the numbers that answers question 2.
+    **Answer:** The table shows the portfolio count for all 15 members of the club. Each has at most 2 portfolios, and 2 members have no portfolio at all. Among members with a portfolio, the total amount bought varies widely, from about $1.1 million up to about $4.1 million.
     """)
     return
 
@@ -119,15 +132,39 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Write the SQL query for question 3 here. Leave its result as the cell's last expression.
+def _(as_of, ask):
+    ask(f"""
+        SELECT
+            p.portfolio_id,
+            p.portfolio_name,
+            a.asset_id,
+            a.asset_name,
+            sum(CASE
+                WHEN t.trade_side = 'BUY' THEN t.quantity
+                WHEN t.trade_side = 'SELL' THEN -t.quantity
+                ELSE 0
+            END) AS units_held
+        FROM portfolios AS p
+        JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+            AND t.trade_date <= DATE '{as_of}'
+        JOIN assets AS a
+            ON a.asset_id = t.asset_id
+        GROUP BY p.portfolio_id, p.portfolio_name, a.asset_id, a.asset_name
+        HAVING sum(CASE
+                WHEN t.trade_side = 'BUY' THEN t.quantity
+                WHEN t.trade_side = 'SELL' THEN -t.quantity
+                ELSE 0
+            END) > 0
+        ORDER BY p.portfolio_id, a.asset_id
+    """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    **Answer:** Write one sentence with the numbers that answers question 3.
+    **Answer:** As of December 31, 2022, the table shows 167 rows, one for each portfolio's positive holding in a given asset, with the units held for that asset. For example, Portfolio 1 held 28 units of Microsoft and 48 units of NVIDIA.
     """)
     return
 
@@ -143,15 +180,31 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Write the SQL query for question 4 here. Leave its result as the cell's last expression.
+def _(as_of, ask):
+    ask(f"""
+        SELECT
+            t.trade_id,
+            t.trade_date,
+            t.asset_id,
+            t.trade_side,
+            t.price_per_unit AS trade_price,
+            cp.close_price,
+            round((t.price_per_unit - cp.close_price) / cp.close_price * 100, 2) AS pct_diff_from_close
+        FROM trades AS t
+        JOIN closing_prices AS cp
+            ON cp.asset_id = t.asset_id
+            AND cp.price_date = t.trade_date
+        WHERE t.trade_date > DATE '{as_of}' - INTERVAL 90 DAY
+            AND t.trade_date <= DATE '{as_of}'
+        ORDER BY t.trade_date, t.trade_id
+    """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    **Answer:** Write one sentence with the numbers that answers question 4.
+    **Answer:** Over the 90 days ending December 31, 2022, 127 trades matched to a closing price on their trade date, and all 127 traded at exactly the closing price (0% average difference).
     """)
     return
 
