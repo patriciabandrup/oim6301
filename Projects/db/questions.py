@@ -16,7 +16,7 @@ def _():
 @app.cell
 def _(date):
     as_of = date(2022, 12, 31)
-    return
+    return (as_of,)
 
 
 @app.cell
@@ -31,7 +31,7 @@ def _(database, duckdb):
         with duckdb.connect(database, read_only=True) as _con:
             return _con.sql(sql).pl()
 
-    return
+    return (ask,)
 
 
 @app.cell(hide_code=True)
@@ -55,15 +55,31 @@ def _(mo):
 
 
 @app.cell
-def _():
-    # Write the SQL query for question 1 here. Leave its result as the cell's last expression.
+def _(as_of, ask):
+    ask(f"""
+        SELECT
+            p.portfolio_id,
+            p.portfolio_name,
+            count(t.trade_id) AS trade_count,
+            sum(CASE WHEN t.trade_side = 'BUY'  THEN 1 ELSE 0 END) AS buy_count,
+            sum(CASE WHEN t.trade_side = 'SELL' THEN 1 ELSE 0 END) AS sell_count,
+            sum(CASE WHEN t.trade_side = 'BUY'  THEN t.quantity * t.price_per_unit + t.fee ELSE 0 END) AS total_bought,
+            sum(CASE WHEN t.trade_side = 'SELL' THEN t.quantity * t.price_per_unit - t.fee ELSE 0 END) AS total_sold
+        FROM portfolios AS p
+        LEFT JOIN trades AS t
+            ON t.portfolio_id = p.portfolio_id
+            AND t.trade_date > DATE '{as_of}' - INTERVAL 30 DAY
+            AND t.trade_date <= DATE '{as_of}'
+        GROUP BY p.portfolio_id, p.portfolio_name
+        ORDER BY trade_count DESC 
+    """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
-    **Answer:** Write one sentence with the numbers that answers question 1.
+    **Answer:** Here we see each portfolio's activity during the 30 days ending December 31, 2022. The table shows the number of trades, buys, and sells, along with the money spent on buys, including fees, and received from sells after fees. I ordered the portfolios from most active to least active. Portfolio 4 was the most active, with 7 trades.
     """)
     return
 
