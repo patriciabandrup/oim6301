@@ -501,11 +501,259 @@ def _(ask):
     return
 
 
+@app.cell
+def _():
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md("""
     **Answer:** By quantity, the top three assets sold in 2022 were Bitcoin (172 units), Apple (160 units), and Ethereum (130 units); by value, the top three were Bitcoin (\$5,458,972.17), Ethereum (\$219,544.07), and Microsoft (\$43,269.36).
     """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    Expanding on Q10: Who Holds the Top Three Assets by Value?
+
+    Using the top three assets by total value sold in 2022 from Question 10 (Bitcoin, Ethereum, Microsoft), which students and portfolios currently hold at least one of them as of the as_of date, and what percentage of students have one versus none?
+    """)
+    return
+
+
+@app.cell
+def _(as_of, ask):
+    ask(f"""
+        WITH top_assets AS (
+            SELECT
+                a.asset_id,
+                a.asset_name,
+                sum(t.quantity * t.price_per_unit) AS total_value_sold
+            FROM trades AS t
+            JOIN assets AS a ON a.asset_id = t.asset_id
+            WHERE t.trade_side = 'SELL'
+                AND t.trade_date >= DATE '2022-01-01'
+                AND t.trade_date <= DATE '2022-12-31'
+            GROUP BY a.asset_id, a.asset_name
+            ORDER BY total_value_sold DESC
+            LIMIT 3
+        ),
+        all_holdings AS (
+            SELECT
+                p.portfolio_id,
+                p.member_id,
+                t.asset_id,
+                sum(CASE
+                    WHEN t.trade_side = 'BUY' THEN t.quantity
+                    WHEN t.trade_side = 'SELL' THEN -t.quantity
+                    ELSE 0
+                END) AS units_held
+            FROM trades AS t
+            JOIN portfolios AS p ON p.portfolio_id = t.portfolio_id
+            WHERE t.trade_date <= DATE '{as_of}'
+            GROUP BY p.portfolio_id, p.member_id, t.asset_id
+            HAVING sum(CASE
+                    WHEN t.trade_side = 'BUY' THEN t.quantity
+                    WHEN t.trade_side = 'SELL' THEN -t.quantity
+                    ELSE 0
+                END) > 0
+        ),
+        latest_price AS (
+            SELECT
+                asset_id,
+                close_price,
+                row_number() OVER (
+                    PARTITION BY asset_id
+                    ORDER BY price_date DESC
+                ) AS rn
+            FROM closing_prices
+            WHERE price_date <= DATE '{as_of}'
+        ),
+        valued_holdings AS (
+            SELECT
+                h.portfolio_id,
+                h.member_id,
+                h.asset_id,
+                h.units_held,
+                h.units_held * lp.close_price AS holding_value
+            FROM all_holdings AS h
+            JOIN latest_price AS lp
+                ON lp.asset_id = h.asset_id
+                AND lp.rn = 1
+        ),
+        portfolio_totals AS (
+            SELECT
+                portfolio_id,
+                sum(holding_value) AS portfolio_total_value
+            FROM valued_holdings
+            GROUP BY portfolio_id
+        )
+        SELECT
+            m.member_id,
+            m.last_name,
+            vh.portfolio_id,
+            ta.asset_name,
+            vh.units_held,
+            round(vh.holding_value, 2) AS asset_value,
+            round(pt.portfolio_total_value, 2) AS portfolio_total_value,
+            round(100.0 * vh.holding_value / pt.portfolio_total_value, 2) AS pct_of_portfolio
+        FROM valued_holdings AS vh
+        JOIN top_assets AS ta ON ta.asset_id = vh.asset_id
+        JOIN members AS m ON m.member_id = vh.member_id
+        JOIN portfolio_totals AS pt ON pt.portfolio_id = vh.portfolio_id
+        ORDER BY asset_value DESC, pct_of_portfolio DESC
+    """)
+    return
+
+
+@app.cell
+def _(as_of, ask):
+    ask(f"""
+        WITH all_holdings AS (
+            SELECT
+                p.portfolio_id,
+                t.asset_id,
+                sum(CASE
+                    WHEN t.trade_side = 'BUY' THEN t.quantity
+                    WHEN t.trade_side = 'SELL' THEN -t.quantity
+                    ELSE 0
+                END) AS units_held
+            FROM trades AS t
+            JOIN portfolios AS p ON p.portfolio_id = t.portfolio_id
+            WHERE t.trade_date <= DATE '{as_of}'
+            GROUP BY p.portfolio_id, t.asset_id
+            HAVING sum(CASE
+                    WHEN t.trade_side = 'BUY' THEN t.quantity
+                    WHEN t.trade_side = 'SELL' THEN -t.quantity
+                    ELSE 0
+                END) > 0
+        ),
+        latest_price AS (
+            SELECT
+                asset_id,
+                close_price,
+                row_number() OVER (
+                    PARTITION BY asset_id
+                    ORDER BY price_date DESC
+                ) AS rn
+            FROM closing_prices
+            WHERE price_date <= DATE '{as_of}'
+        ),
+        valued_holdings AS (
+            SELECT
+                h.portfolio_id,
+                h.asset_id,
+                h.units_held * lp.close_price AS holding_value
+            FROM all_holdings AS h
+            JOIN latest_price AS lp
+                ON lp.asset_id = h.asset_id
+                AND lp.rn = 1
+        ),
+        portfolio_totals AS (
+            SELECT
+                portfolio_id,
+                sum(holding_value) AS portfolio_total_value
+            FROM valued_holdings
+            GROUP BY portfolio_id
+        ),
+        bitcoin_pct AS (
+            SELECT
+                vh.portfolio_id,
+                round(100.0 * vh.holding_value / pt.portfolio_total_value, 2) AS pct_of_portfolio
+            FROM valued_holdings AS vh
+            JOIN assets AS a ON a.asset_id = vh.asset_id
+            JOIN portfolio_totals AS pt ON pt.portfolio_id = vh.portfolio_id
+            WHERE a.asset_name = 'Bitcoin'
+        )
+        SELECT
+            count(*) AS portfolios_with_bitcoin,
+            min(pct_of_portfolio) AS min_pct,
+            max(pct_of_portfolio) AS max_pct,
+            sum(CASE WHEN pct_of_portfolio >= 53 THEN 1 ELSE 0 END) AS num_at_least_53_pct,
+            round(100.0 * sum(CASE WHEN pct_of_portfolio >= 53 THEN 1 ELSE 0 END) / count(*), 1) AS pct_at_least_53_pct
+        FROM bitcoin_pct
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask(f"""
+        SELECT member_id, portfolio_id, count(*) AS row_count
+        FROM portfolios
+        WHERE member_id IS NOT NULL AND portfolio_id IS NOT NULL
+        GROUP BY member_id, portfolio_id
+    """)
+    return
+
+
+@app.cell
+def _(as_of, ask):
+    ask(f"""
+        WITH top_assets AS (
+            SELECT a.asset_id
+            FROM trades AS t
+            JOIN assets AS a ON a.asset_id = t.asset_id
+            WHERE t.trade_side = 'SELL'
+                AND t.trade_date >= DATE '2022-01-01'
+                AND t.trade_date <= DATE '2022-12-31'
+            GROUP BY a.asset_id
+            ORDER BY sum(t.quantity * t.price_per_unit) DESC
+            LIMIT 3
+        ),
+        member_holdings AS (
+            SELECT
+                p.member_id,
+                t.asset_id,
+                sum(CASE
+                    WHEN t.trade_side = 'BUY' THEN t.quantity
+                    WHEN t.trade_side = 'SELL' THEN -t.quantity
+                    ELSE 0
+                END) AS units_held
+            FROM trades AS t
+            JOIN portfolios AS p ON p.portfolio_id = t.portfolio_id
+            WHERE t.trade_date <= DATE '{as_of}'
+            GROUP BY p.member_id, t.asset_id
+            HAVING sum(CASE
+                    WHEN t.trade_side = 'BUY' THEN t.quantity
+                    WHEN t.trade_side = 'SELL' THEN -t.quantity
+                    ELSE 0
+                END) > 0
+        ),
+        member_flag AS (
+            SELECT
+                m.member_id,
+                CASE WHEN count(mh.asset_id) > 0 THEN 'Has at least one' ELSE 'Has none' END AS holds_top_asset
+            FROM members AS m
+            LEFT JOIN member_holdings AS mh
+                ON mh.member_id = m.member_id
+                AND mh.asset_id IN (SELECT asset_id FROM top_assets)
+            GROUP BY m.member_id
+        )
+        SELECT
+            holds_top_asset,
+            count(*) AS member_count,
+            round(100.0 * count(*) / (SELECT count(*) FROM members), 1) AS pct_of_members
+        FROM member_flag
+        GROUP BY holds_top_asset
+        ORDER BY holds_top_asset
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""
+    **Answer:** The first table lists every student and portfolio that holds at least one of Bitcoin, Ethereum, or Microsoft as of December 31, 2022 (43 rows), now with each holding's dollar value (units held times its closing price on the as_of date), each portfolio's total value across all of its holdings, not just the top three assets, and the percentage that holding makes up of the portfolio's total value. The second table shows that 13 of the 15 members (86.7%) hold at least one of these three assets, while 2 members (13.3%) hold none of them.
+    """)
+    return
+
+
+@app.cell
+def _():
     return
 
 
