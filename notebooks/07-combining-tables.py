@@ -140,6 +140,54 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask, towns_database):
+    ask(towns_database,""" 
+    SELECT *
+    FROM towns 
+    JOIN counties ON towns.county = counties.name
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database,""" 
+    SELECT ShipCountry, count(*) AS orders
+    FROM orders
+    WHERE Freight > 100 
+    GROUP BY ShipCountry
+    HAVING orders > 500 
+    """)
+
+    # WHERE happens before GROUP BY
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+    SELECT sum(o.Freight)
+    FROM orders AS o
+    JOIN order_details AS d
+    ON d.OrderID = o.OrderID
+    WHERE o.OrderID = 10248
+    """)
+    return
+
+
+@app.cell
+def _(ask, northwind_database):
+    ask(northwind_database, """
+    SELECT sum(o.Freight)
+    FROM orders AS o
+    JOIN order_details AS d
+    ON d.OrderID = o.OrderID
+    WHERE o.OrderID = 10248
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
