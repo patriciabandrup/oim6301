@@ -474,20 +474,18 @@ def _(ask):
     return
 
 
-app._unparsable_cell(
-    """
-    ask(\"\"\"
+@app.cell
+def _(ask):
+    ask("""
         SELECT county, count(*) AS towns
         FROM towns
         WHERE average_single_family_bill_dollars > 10000
         GROUP BY county
         -- HAVING count(*) > 5
         ORDER BY towns DESC
-    \"\"\")
-    -- count function happens after GROUP function 
-    """,
-    name="_"
-)
+    """)
+    # count function happens after GROUP function
+    return
 
 
 @app.cell
@@ -516,6 +514,56 @@ def _(mo):
     return
 
 
+@app.cell
+def _(ask):
+    ask("""
+        SELECT county, count(*) AS town_count
+        FROM towns
+        GROUP BY county
+        ORDER BY town_count DESC
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT county,
+            sum(population) AS total_population,
+            sum(CASE WHEN average_single_family_bill_dollars > 10000 THEN population ELSE 0 END) AS population_high_bill,
+            round(
+                sum(CASE WHEN average_single_family_bill_dollars > 10000 THEN population ELSE 0 END) * 1.0
+                / sum(population),
+                3
+            ) AS share_high_bill
+        FROM towns
+        GROUP BY county
+        ORDER BY total_population DESC
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT sum(population) AS total_population_all_counties
+        FROM towns
+    """)
+    return
+
+
+@app.cell
+def _(ask):
+    ask("""
+        SELECT towns.name AS town, towns.population AS town_population,
+            counties.name AS county, counties.population AS county_population
+        FROM towns
+        JOIN counties ON towns.county = counties.name
+        ORDER BY town
+    """)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -526,13 +574,11 @@ def _(mo):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _(ask):
     ask("SELECT * FROM high_bill_towns_by_county ORDER BY towns DESC")
-    -- the view of high_bill_towns_by_county was created before
-    """,
-    name="_"
-)
+    # the view high_bill_towns_by_county was created when the database was built
+    return
 
 
 @app.cell(hide_code=True)
